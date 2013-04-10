@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>Yummy.Common</id>
+    <version>1.0.0</version>
+    <authors>Niall Duane</authors>
+    <owners>Niall Duane</owners>
+    <projectUrl>http://github.com/niallduane/Yummy</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>
+      Library of common functionality. It includes Custom DataAnnotation Attributes, MVC Facebook Filters, Xml Data Encryption and various Extensions.
+      This project is mainly for my own benefit when building .Net Solutions. It was also used to get familiar with NuGet.
+    </description>
+    <releaseNotes></releaseNotes>
+    <copyright>Copyright 2013</copyright>
+    <tags></tags>
+    <dependencies>
+      <dependency id="Facebook" version="6.1.4" />
+      <dependency id="MicrosoftReportViewerWebForms_v10" version="1.0.0" />
+    </dependencies>
+  </metadata></package>

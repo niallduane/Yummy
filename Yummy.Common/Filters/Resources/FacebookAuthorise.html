@@ -1,0 +1,46 @@
+﻿<div id="fb-root"></div>
+<form action="{{url}}" method="post" id="form-authorise">
+    <input type="hidden" id="signed_request" name="signed_request" />
+    <input type="hidden" id="status" name="status" />
+    <input type="hidden" id="app_data" name="app_data" value="{{app_data}}" />
+</form>
+<script type="text/javascript">
+    window.fbAsyncInit = function () {
+        FB.init({ appId: '{{appId}}', status: true, cookie: true,  xfbml: false });
+
+        if (top === self) { document.getElementById("form-authorise").method = "get"; }
+
+        FB.getLoginStatus(function (r) {
+            if (r.status === "connected") {
+                document.getElementById("status").value = r.status;
+                document.getElementById("signed_request").value = r.authResponse.signedRequest;
+                document.getElementById("form-authorise").submit();
+            }
+            else {
+                if (top !== self) {
+                    FB.login(function (response) {
+                        document.getElementById("status").value = response.status;
+
+                        if (response.authResponse) {
+                            document.getElementById("signed_request").value = response.authResponse.signedRequest;
+                        }
+
+                        document.getElementById("form-authorise").submit();
+                    }, { scope: '{{permissions}}' });
+                }
+                else {
+                    document.getElementById("status").value = "popup-blocked";
+                    document.getElementById("form-authorise").submit();
+                }
+            }
+        }, '{{permissions}}');
+    };
+
+    (function (d) {
+        var js, id = 'facebook-jssdk', ref = d.getElementsByTagName('script')[0];
+        if (d.getElementById(id)) { return; }
+        js = d.createElement('script'); js.id = id; js.async = true;
+        js.src = "//connect.facebook.net/en_US/all.js";
+        ref.parentNode.insertBefore(js, ref);
+    }(document));
+</script>
