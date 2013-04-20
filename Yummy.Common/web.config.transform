@@ -1,0 +1,47 @@
+﻿<configuration>
+  <configSections>
+    <section name="ImageHandlerSettings" type="Yummy.Common.Configuration.ImageHandler.ImageHandlerSetting, Yummy.Common"/>
+    <section name="resizer" type="ImageResizer.ResizerSection,ImageResizer"  requirePermission="false"  />
+  </configSections>
+
+  <ImageHandlerSettings SourceDirectory="~/Uploads/" Default="Thumbnail">
+    <ImageSetting>
+      <add Name="Compressed" MaxHeight="700" MaxWidth="700" Quality="90" />
+      <add Name="Thumbnail" MaxHeight="200" MaxWidth="200" Quality="90" />
+    </ImageSetting>
+  </ImageHandlerSettings>
+
+  <resizer>
+    <!-- Unless you (a) use Integrated mode, or (b) map all reqeusts to ASP.NET, 
+          you'll need to add .ashx to your image URLs: image.jpg.ashx?width=200&height=20 -->
+    <pipeline fakeExtensions=".ashx" />
+
+    <plugins>
+      <add name="MvcRoutingShim" />
+      <add name="AutoRotate" />
+    </plugins>
+  </resizer>
+  
+  <system.web>
+    <httpModules>
+      <!-- This is for IIS5, IIS6, and IIS7 Classic, and Cassini/VS Web Server-->
+      <add name="ImageResizingModule" type="ImageResizer.InterceptModule"/>
+    </httpModules>
+
+    <httpHandlers>
+      <add verb="*" path="Image.axd" type="Yummy.Common.Handlers.ImageHandler,Yummy.Common" />
+    </httpHandlers>
+  </system.web>
+
+  <system.webServer>
+    <validation validateIntegratedModeConfiguration="false"/>
+    <modules>
+      <!-- This is for IIS7+ Integrated mode -->
+      <add name="ImageResizingModule" type="ImageResizer.InterceptModule"/>
+    </modules>
+    
+    <handlers>
+      <add name="ImageHandler" path="Image.axd" type="Yummy.Common.Handlers.ImageHandler,Yummy.Common" verb="*" />
+    </handlers>
+  </system.webServer>
+</configuration>

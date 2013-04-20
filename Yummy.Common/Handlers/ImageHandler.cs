@@ -6,30 +6,48 @@ using System.Web;
 using System.Drawing;
 using System.Text.RegularExpressions;
 using System.IO;
+using Yummy.Common.Configuration.ImageHandler;
+using System.Drawing.Imaging;
+using ImageResizer;
 
 namespace Yummy.Common.Handlers
 {
+    /// <summary>
+    /// Image Handler gives a website the ability for the user to upload an Image file. 
+    /// Keep the Original file and create different image sizes
+    /// based on the original file
+    /// </summary>
+    /// <remarks>
+    /// <ImageHandlerSettings OutputDirectory="~/Uploads/" SourceDirectory="~/Uploads/" Default="Thumbnail">
+    ///    <Preset Name="Thumbnail" MaxHeight="200" MaxWidth="200" Quality="90">
+    /// </ImageHandlerSettings>
+    /// </remarks>
     public class ImageHandler : IHttpHandler
     {
-        string getSourceFile(HttpContext context)
+        private ImageHandlerSetting HandlerSettings = ImageHandlerSetting.Settings;
+
+        private string GetOriginalFilePath(HttpContext context)
         {
-            return context.Request.QueryString["s"];
+            return HandlerSettings.SourceDirectory + GetFileName(context);
         }
 
-        string getOutputDirectory(HttpContext context)
+        private string GetFileName(HttpContext context)
         {
-            return context.Request.QueryString["o"];
-        }
-        
-        string getFileName(HttpContext context)
-        {
-            string name = context.Request.QueryString["f"];
-            return Regex.Replace(name, @"\.{2,}", @".");
+            string file = context.Request["f"];
+            if (string.IsNullOrEmpty(file)) throw new Exception("The Filename was not sent in the Request.");
+
+            return Regex.Replace(file, @"\.{2,}", @".");
         }
 
-        string GetPreset(HttpContext context)
+        private ImageSetting GetImageSettings(HttpContext context)
         {
-            return context.Request.QueryString["p"];
+            string setting = (!String.IsNullOrEmpty(context.Request["s"])) ? context.Request["s"] :  HandlerSettings.Default;
+            return HandlerSettings.ImageSettings.GetSetting(setting);
+        }
+
+        private string GetNewFilePath(HttpContext context)
+        {
+            return string.Format("{0}/{1}", HandlerSettings.SourceDirectory, GetImageSettings(context).Name);
         }
 
         private Bitmap Error()
@@ -42,18 +60,25 @@ namespace Yummy.Common.Handlers
         public void ProcessRequest(HttpContext context)
         {
             context.Response.ContentType = "image/jpg";
-
-            //if (File.Exists(systemFile))
-            //{
-            //    var imageSettings = new ResizeSettings(settings.Presets[preset].Value + "&format=jpg");
-            //    ImageBuilder.Current.Build(sourceDir + fileName, file, imageSettings);
-            //    context.Response.WriteFile(file);
-            //}
-            //else
-            //{
-            //    context.Response.StatusCode = 500;
-            //    Error().Save(context.Response.OutputStream, ImageFormat.Jpeg);
-            //}
+            string orginalFile = context.Server.MapPath(GetOriginalFilePath(context));
+            if (File.Exists(orginalFile))
+            {
+                string directory = context.Server.MapPath(GetNewFilePath(context));
+                string newFile = string.Format("{0}/{1}", context.Server.MapPath(GetNewFilePath(context)), GetFileName(context));
+                if (File.Exists(newFile))
+                {
+                    context.Response.WriteFile(newFile);
+                    return;
+                }
+                if (!Directory.Exists(directory)) Directory.CreateDirectory(directory);
+                
+                ImageBuilder.Current.Build(orginalFile, newFile, new ResizeSettings(GetImageSettings(context).ToString() + "&amp;format=jpg"));
+                context.Response.WriteFile(newFile);
+                return;
+                
+            }
+            context.Response.StatusCode = 500;
+            Error().Save(context.Response.OutputStream, ImageFormat.Jpeg);
         }
 
         public bool IsReusable
